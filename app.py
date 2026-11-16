@@ -11,7 +11,9 @@ app = Flask(__name__)
 # Banco: usa o PostgreSQL da internet se existir, senão o SQLite local
 url_banco = os.environ.get('DATABASE_URL', 'sqlite:///walls.db')
 if url_banco.startswith('postgres://'):
-    url_banco = url_banco.replace('postgres://', 'postgresql://', 1)
+    url_banco = url_banco.replace('postgres://', 'postgresql+psycopg://', 1)
+elif url_banco.startswith('postgresql://'):
+    url_banco = url_banco.replace('postgresql://', 'postgresql+psycopg://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = url_banco
 
 # Login por senha
