@@ -3,17 +3,15 @@ import hmac
 from urllib.parse import quote
 from datetime import datetime, timedelta, timezone
 from flask import (Flask, render_template, request, redirect,
-                   url_for, session)
+                   url_for, session, send_from_directory)
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
 # Banco: usa o PostgreSQL da internet se existir, senão o SQLite local
 url_banco = os.environ.get('DATABASE_URL', 'sqlite:///walls.db')
-if url_banco.startswith('postgres://'):
-    url_banco = url_banco.replace('postgres://', 'postgresql+psycopg://', 1)
-elif url_banco.startswith('postgresql://'):
-    url_banco = url_banco.replace('postgresql://', 'postgresql+psycopg://', 1)
+if url_banco.startswith(('postgres://', 'postgresql://')):
+    url_banco = 'postgresql+psycopg://' + url_banco.split('://', 1)[1]
 app.config['SQLALCHEMY_DATABASE_URI'] = url_banco
 
 # Login por senha
@@ -36,7 +34,7 @@ def agora():
 # ---------------------------------------------------------------
 @app.before_request
 def exigir_login():
-    if request.endpoint in ('login', 'static'):
+    if request.endpoint in ('login', 'static', 'service_worker'):
         return None
     if not session.get('logado'):
         return redirect(url_for('login'))
@@ -59,6 +57,18 @@ def login():
 def sair():
     session.clear()
     return redirect(url_for('login'))
+
+
+# ---------------------------------------------------------------
+# Modo offline (service worker)
+# ---------------------------------------------------------------
+@app.route('/sw.js')
+def service_worker():
+    resposta = send_from_directory(
+        os.path.join(app.root_path, 'static'), 'sw.js',
+        mimetype='application/javascript')
+    resposta.headers['Cache-Control'] = 'no-cache'
+    return resposta
 
 
 # ---------------------------------------------------------------
