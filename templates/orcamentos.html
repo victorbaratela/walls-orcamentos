@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class='card'>
+  <h2>Orçamentos</h2>
+  <a href='/orcamentos/novo'><button type='button'>+ Novo orçamento</button></a>
+  <table>
+    <tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Total</th><th></th></tr>
+    {% for o in orcamentos %}
+    <tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.data.strftime('%d/%m/%Y') }}</td>
+      <td>{{ o.cliente.nome }}</td>
+      <td>{{ o.total|moeda }}</td>
+      <td><a href='/orcamentos/{{ o.id }}'>Abrir</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

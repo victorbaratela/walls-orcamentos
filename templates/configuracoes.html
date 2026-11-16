@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class='card'>
+  <h2>Configurações do frete</h2>
+  <p>Esses valores são usados para calcular o frete de cada orçamento.</p>
+  <form method='post'>
+    <label>Preço do litro do combustível (R$)</label>
+    <input name='preco_litro' inputmode='decimal' value='{{ cfg.preco_litro }}' required>
+    <label>Consumo do veículo (km por litro)</label>
+    <input name='km_por_litro' inputmode='decimal' value='{{ cfg.km_por_litro }}' required>
+    <label>Pedágios padrão (R$)</label>
+    <input name='pedagio_padrao' inputmode='decimal' value='{{ cfg.pedagio_padrao }}' required>
+    <label>Lucro sobre o frete (%)</label>
+    <input name='lucro_percentual' inputmode='decimal' value='{{ cfg.lucro_percentual }}' required>
+    <button type='submit'>Salvar configurações</button>
+  </form>
+</div>
+{% endblock %}

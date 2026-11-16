@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wall's</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f5f7; color: #222; }
+    header { background: #14161a; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .logo { color: #f5b301; font-size: 26px; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
+    nav a { color: #fff; text-decoration: none; margin-left: 18px; font-size: 15px; }
+    nav a:hover { color: #f5b301; }
+    main { max-width: 900px; margin: 20px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    h1, h2 { margin-top: 0; }
+    label { display: block; margin: 10px 0 4px; font-weight: bold; font-size: 14px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+    button { background: #f5b301; color: #14161a; border: 0; padding: 11px 18px; border-radius: 6px; font-size: 16px; font-weight: bold; margin-top: 14px; cursor: pointer; }
+    button.excluir { background: #e5484d; color: #fff; padding: 6px 10px; margin: 0; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #eee; font-size: 15px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .numero { font-size: 38px; font-weight: bold; color: #f5b301; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="/">Wall's</a>
+	{% if session.get('logado') %}
+<nav>
+  <a href='/'>Início</a>
+  <a href='/orcamentos'>Orçamentos</a>
+  <a href='/clientes'>Clientes</a>
+  <a href='/itens'>Itens e serviços</a>
+  <a href='/configuracoes'>Frete</a>
+  <a href='/sair'>Sair</a>
+</nav>
+{% endif %}
+  </header>
+  <main>
+    {% block conteudo %}{% endblock %}
+  </main>
+</body>
+</html>

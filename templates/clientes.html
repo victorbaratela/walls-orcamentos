@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="card">
+  <h2>Novo cliente</h2>
+  <form method="post">
+    <label>Nome</label>
+    <input name="nome" required>
+    <label>Telefone / WhatsApp</label>
+    <input name="telefone" type="tel">
+    <label>Endereço do evento</label>
+    <input name="endereco">
+    <button type="submit">Salvar cliente</button>
+  </form>
+</div>
+<div class="card">
+  <h2>Clientes</h2>
+  <table>
+    <tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th></th></tr>
+    {% for c in clientes %}
+    <tr>
+      <td>{{ c.nome }}</td>
+      <td>{{ c.telefone or "" }}</td>
+      <td>{{ c.endereco or "" }}</td>
+      <td>
+        <form method="post" action="/clientes/{{ c.id }}/excluir" onsubmit="return confirm('Excluir este cliente?')">
+          <button class="excluir">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
