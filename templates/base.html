@@ -1,49 +1,102 @@
+{%- from '_icones.html' import icone -%}
+{%- set ep = request.endpoint or '' -%}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang='pt-BR'>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
   <title>Wall's</title>
-<link rel='manifest' href='/static/manifest.json'>
-<meta name='theme-color' content='#14161a'>
-<link rel='apple-touch-icon' href='/static/icon-192.png'>
   <style>
+    :root { --fundo: #f4f5f7; --escuro: #14161a; --ouro: #f5b301; --cinza: #8a8f98; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: #f4f5f7; color: #222; }
-    header { background: #14161a; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-    .logo { color: #f5b301; font-size: 26px; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
-    nav a { color: #fff; text-decoration: none; margin-left: 18px; font-size: 15px; }
-    nav a:hover { color: #f5b301; }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--fundo); color: #222; padding-bottom: 84px; }
+    header { background: var(--escuro); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { color: var(--ouro); font-size: 26px; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
+    .sair { color: #fff; opacity: .75; font-size: 14px; text-decoration: none; }
+    .sair:hover { opacity: 1; }
     main { max-width: 900px; margin: 20px auto; padding: 0 16px; }
-    .card { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    h1, h2 { margin-top: 0; }
+    .card { background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    h1, h2, h3 { margin-top: 0; }
     label { display: block; margin: 10px 0 4px; font-weight: bold; font-size: 14px; }
     input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-    button { background: #f5b301; color: #14161a; border: 0; padding: 11px 18px; border-radius: 6px; font-size: 16px; font-weight: bold; margin-top: 14px; cursor: pointer; }
+    button, .botao { background: var(--ouro); color: var(--escuro); border: 0; padding: 11px 18px; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+    button:hover, .botao:hover { filter: brightness(.95); }
     button.excluir { background: #e5484d; color: #fff; padding: 6px 10px; margin: 0; font-size: 13px; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 10px 6px; border-bottom: 1px solid #eee; font-size: 15px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-    .numero { font-size: 38px; font-weight: bold; color: #f5b301; }
+    .rolagem { overflow-x: auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+    .numero { font-size: 38px; font-weight: bold; color: var(--ouro); }
+    .icone { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .abas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; background: #fff; border-top: 1px solid #e2e4e8; padding-bottom: env(safe-area-inset-bottom); }
+    .aba { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 2px 8px; color: var(--cinza); text-decoration: none; font-size: 11px; transition: color .15s, background .15s, transform .1s; }
+    .aba:hover { color: var(--escuro); background: #f7f7f9; }
+    .aba:active { transform: scale(.94); }
+    .aba.ativa { color: var(--escuro); font-weight: bold; }
+    .aba.ativa::before { content: ''; position: absolute; top: 0; left: 25%; right: 25%; height: 3px; background: var(--ouro); border-radius: 0 0 3px 3px; }
+
+    .subabas { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+    .sub { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; background: #e9ebef; color: #333; text-decoration: none; font-size: 14px; white-space: nowrap; transition: background .15s; }
+    .sub .icone { width: 18px; height: 18px; }
+    .sub:hover { background: #dcdfe5; }
+    .sub.ativa { background: var(--escuro); color: var(--ouro); font-weight: bold; }
+
+    .tipos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 14px; }
+    .tipo-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 10px; border: 2px solid #e6e8ec; border-radius: 12px; color: var(--escuro); text-decoration: none; text-align: center; transition: border-color .15s, transform .15s; }
+    .tipo-card:hover { border-color: var(--ouro); transform: translateY(-2px); }
+    .tipo-card .icone { width: 38px; height: 38px; }
+    .tipo-card small { color: var(--cinza); }
+    .duplo { display: flex; gap: 6px; }
+
+    .selo { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap; }
+    .selo[data-t='Som'] { background: #e6f1fb; color: #0c447c; }
+    .selo[data-t='Iluminação'] { background: #fdf0cc; color: #6b4a00; }
+    .selo[data-t='Som e iluminação'] { background: #eeedfe; color: #3c3489; }
+    .selo[data-t='Frete'] { background: #e3f3e0; color: #1f5f1a; }
+
+    .mini { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex: none; }
+    .mini.vazia { display: inline-flex; align-items: center; justify-content: center; background: #eef0f3; color: #aab0ba; }
+    .linha-item { display: flex; align-items: center; gap: 10px; }
+    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .mini-card { display: block; border: 1px solid #e6e8ec; border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; background: #fff; transition: border-color .15s, transform .15s; }
+    .mini-card:hover { border-color: var(--ouro); transform: translateY(-2px); }
+    .mini-card .foto { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #eef0f3; }
+    .mini-card .foto.vazia { display: flex; align-items: center; justify-content: center; color: #aab0ba; }
+    .mini-card .foto.vazia .icone { width: 40px; height: 40px; }
+    .mini-card .info { padding: 10px; font-size: 14px; }
+    .mini-card .info b { display: block; margin-bottom: 4px; }
+    .foto-atual { max-width: 220px; width: 100%; border-radius: 12px; display: block; margin-bottom: 8px; }
+
+    .marcar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .marcar label { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 16px; border: 2px solid #e6e8ec; border-radius: 10px; font-size: 16px; cursor: pointer; }
+    .marcar input { width: 22px; height: 22px; margin: 0; padding: 0; }
+    .aviso-suave { color: #6b7280; font-size: 14px; margin: 10px 0 0; }
+
+    @media (min-width: 768px) {
+      body { padding-bottom: 0; }
+      .abas { position: static; justify-content: center; border-top: 0; border-bottom: 1px solid #e2e4e8; }
+      .aba { flex: 0 0 auto; flex-direction: row; gap: 8px; padding: 14px 22px; font-size: 15px; }
+      .aba.ativa::before { top: auto; bottom: 0; left: 0; right: 0; border-radius: 3px 3px 0 0; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <a class="logo" href="/">Wall's</a>
-	{% if session.get('logado') %}
-<nav>
-  <a href='/'>Início</a>
-  <a href='/orcamentos'>Orçamentos</a>
-  <a href='/clientes'>Clientes</a>
-  <a href='/itens'>Itens e serviços</a>
-  <a href='/configuracoes'>Frete</a>
-  <a href='/sair'>Sair</a>
-</nav>
-{% endif %}
+    <a class='logo' href='/'>Wall's</a>
+    {% if session.get('logado') %}<a class='sair' href='/sair'>Sair</a>{% endif %}
   </header>
+  {% if session.get('logado') %}
+  <nav class='abas'>
+    <a class='aba{% if ep == 'index' %} ativa{% endif %}' href='/'>{{ icone('casa') }}<span>Início</span></a>
+    <a class='aba{% if ep in ['orcamentos', 'novo_orcamento', 'ver_orcamento'] %} ativa{% endif %}' href='/orcamentos'>{{ icone('orcamento') }}<span>Orçamentos</span></a>
+    <a class='aba{% if ep == 'clientes' %} ativa{% endif %}' href='/clientes'>{{ icone('clientes') }}<span>Clientes</span></a>
+    <a class='aba{% if ep in ['itens', 'editar_item'] %} ativa{% endif %}' href='/itens'>{{ icone('itens') }}<span>Serviços</span></a>
+    <a class='aba{% if ep == 'configuracoes' %} ativa{% endif %}' href='/configuracoes'>{{ icone('ajustes') }}<span>Ajustes</span></a>
+  </nav>
+  {% endif %}
   <main>
     {% block conteudo %}{% endblock %}
   </main>
-<script src='/static/app.js'></script>
 </body>
 </html>

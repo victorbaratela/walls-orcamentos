@@ -2,18 +2,31 @@
 {% block conteudo %}
 <div class='card'>
   <h2>Orçamentos</h2>
-  <a href='/orcamentos/novo'><button type='button'>+ Novo orçamento</button></a>
-  <table>
-    <tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Total</th><th></th></tr>
-    {% for o in orcamentos %}
-    <tr>
-      <td>{{ o.id }}</td>
-      <td>{{ o.data.strftime('%d/%m/%Y') }}</td>
-      <td>{{ o.cliente.nome }}</td>
-      <td>{{ o.total|moeda }}</td>
-      <td><a href='/orcamentos/{{ o.id }}'>Abrir</a></td>
-    </tr>
+  <div class='subabas'>
+    <a class='sub{% if not tipo %} ativa{% endif %}' href='/orcamentos'>Todos</a>
+    {% for t in tipos %}
+    <a class='sub{% if tipo == t %} ativa{% endif %}' href='/orcamentos?tipo={{ t|urlencode }}'>{{ t }}</a>
     {% endfor %}
-  </table>
+  </div>
+  <a class='botao' style='margin-top:0' href='/orcamentos/novo'>+ Som e iluminação</a>
+  <a class='botao' style='margin-top:0' href='/orcamentos/novo?modo=frete'>+ Frete</a>
+  {% if not orcamentos %}
+  <p>Nenhum orçamento por aqui ainda.</p>
+  {% else %}
+  <div class='rolagem'>
+    <table>
+      <tr><th>Número</th><th>Tipo</th><th>Cliente</th><th>Total</th><th></th></tr>
+      {% for o in orcamentos %}
+      <tr>
+        <td><b>{{ o.numero or o.id }}</b></td>
+        <td><span class='selo' data-t='{{ o.tipo }}'>{{ o.tipo }}</span></td>
+        <td>{{ o.cliente.nome }}<br><small>{{ o.data.strftime('%d/%m/%Y') }}</small></td>
+        <td>{{ o.total|moeda }}</td>
+        <td><a href='/orcamentos/{{ o.id }}'>Abrir</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

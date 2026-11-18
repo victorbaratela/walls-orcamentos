@@ -1,22 +1,28 @@
 {% extends 'base.html' %}
+{% from '_icones.html' import icone %}
 {% block conteudo %}
 <div class='card'>
   <h1>Bem-vindo ao Wall's</h1>
-  <p>Sistema de orçamentos de som, iluminação e frete.</p>
-  <a href='/orcamentos/novo'><button type='button'>+ Novo orçamento</button></a>
+  <p>Que tipo de orçamento você quer fazer?</p>
+  <div class='tipos'>
+    <a class='tipo-card' href='/orcamentos/novo'>
+      <span class='duplo'>{{ icone('som') }}{{ icone('luz') }}</span>
+      <b>Som e iluminação</b><small>{{ n_equip }} no total</small>
+    </a>
+    <a class='tipo-card' href='/orcamentos/novo?modo=frete'>
+      {{ icone('frete') }}
+      <b>Frete</b><small>{{ n_frete }} no total</small>
+    </a>
+  </div>
 </div>
 <div class='grid'>
-  <div class='card'>
-    <div class='numero'>{{ total_orcamentos }}</div>
-    <div>Orçamentos</div>
-  </div>
   <div class='card'>
     <div class='numero'>{{ total_clientes }}</div>
     <div>Clientes cadastrados</div>
   </div>
   <div class='card'>
     <div class='numero'>{{ total_itens }}</div>
-    <div>Itens e serviços</div>
+    <div>Serviços cadastrados</div>
   </div>
 </div>
 {% endblock %}

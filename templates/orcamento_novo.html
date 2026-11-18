@@ -2,6 +2,10 @@
 {% block conteudo %}
 <div class='card'>
   <h2>Novo orçamento</h2>
+  <div class='subabas'>
+    <a class='sub{% if modo == 'equip' %} ativa{% endif %}' href='/orcamentos/novo'>Som e iluminação</a>
+    <a class='sub{% if modo == 'frete' %} ativa{% endif %}' href='/orcamentos/novo?modo=frete'>Frete</a>
+  </div>
   {% if not clientes %}
   <p>Cadastre pelo menos um cliente antes. <a href='/clientes'>Ir para Clientes</a></p>
   {% else %}
@@ -9,40 +13,66 @@
         data-litro='{{ cfg.preco_litro }}'
         data-kml='{{ cfg.km_por_litro }}'
         data-lucro='{{ cfg.lucro_percentual }}'>
+    <input type='hidden' name='modo' value='{{ modo }}'>
     <label>Cliente</label>
     <select name='cliente_id' required>
       {% for c in clientes %}<option value='{{ c.id }}'>{{ c.nome }}</option>{% endfor %}
     </select>
 
-    <h3>Itens</h3>
-    <table>
-      <tr><th>Item</th><th>Preço</th><th>Qtd</th></tr>
-      {% for i in itens %}
-      <tr>
-        <td>{{ i.nome }}<br><small>{{ i.categoria }}</small></td>
-        <td>{{ i.preco|moeda }}</td>
-        <td style='width:80px'>
-          <input type='number' min='0' value='0' class='qtd'
-                 name='qtd_{{ i.id }}' data-preco='{{ i.preco }}'>
-        </td>
-      </tr>
-      {% endfor %}
-    </table>
-
-    <h3>Frete</h3>
+    {% if modo == 'frete' %}
+    <h3 style='margin-top:18px'>Frete</h3>
     <label>Km do trajeto (ida e volta)</label>
     <input name='km' id='km' inputmode='decimal' value='0'>
     <label>Pedágios (R$)</label>
     <input name='pedagios' id='pedagios' inputmode='decimal' value='{{ cfg.pedagio_padrao }}'>
-    <label>Frete calculado (R$) - pode ajustar</label>
+    <label>Valor do frete (R$) - calculado, pode ajustar</label>
     <input name='frete' id='frete' inputmode='decimal' value='0'>
+    {% else %}
+    <h3 style='margin-top:18px'>Fornecimento</h3>
+    <div class='marcar'>
+      {% for cat, lista in secoes %}
+      <label><input type='checkbox' class='marca' name='categorias' value='{{ cat }}'> {{ NOME_CATEGORIA.get(cat, cat) }}</label>
+      {% endfor %}
+    </div>
+    <p class='aviso-suave' id='aviso-marcar'>Marque o que será fornecido neste orçamento.</p>
+
+    {% for cat, lista in secoes %}
+    <div class='secao' data-cat='{{ cat }}' hidden>
+      <h3 style='margin-top:20px'>{{ NOME_CATEGORIA.get(cat, cat) }}</h3>
+      {% if not lista %}
+      <p>Nenhum serviço cadastrado nesta categoria. <a href='/itens'>Cadastrar serviços</a></p>
+      {% else %}
+      <div class='rolagem'>
+        <table>
+          <tr><th>Serviço</th><th>Preço</th><th>Qtd</th></tr>
+          {% for i in lista %}
+          <tr>
+            <td>
+              <div class='linha-item'>
+                {% if i.tem_imagem %}<img class='mini' src='/itens/{{ i.id }}/imagem?v={{ i.imagem_v }}' alt='' loading='lazy'>{% endif %}
+                <span>{{ i.nome }}</span>
+              </div>
+            </td>
+            <td>{{ i.preco|moeda }}</td>
+            <td style='width:80px'>
+              <input type='number' min='0' value='0' class='qtd' disabled
+                     name='qtd_{{ i.id }}' data-preco='{{ i.preco }}'>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
 
     <label>Desconto (R$)</label>
     <input name='desconto' id='desconto' inputmode='decimal' value='0'>
     <label>Observações</label>
     <input name='observacoes' placeholder='Ex.: data e local do evento'>
 
-    <h2>Total: <span id='total'>R$ 0,00</span></h2>
+    <h2 style='margin-top:18px'>Total: <span id='total'>R$ 0,00</span></h2>
     <button type='submit'>Salvar orçamento</button>
   </form>
   {% endif %}
@@ -52,36 +82,62 @@
 const form = document.getElementById('form-orc');
 if (form) {
   const num = v => parseFloat(String(v).replace(',', '.')) || 0;
+  const fmt = v => 'R$ ' + v.toFixed(2).replace('.', ',');
   const litro = num(form.dataset.litro);
   const kml = num(form.dataset.kml);
   const lucro = num(form.dataset.lucro);
+  const kmEl = document.getElementById('km');
+  const pedEl = document.getElementById('pedagios');
   const freteEl = document.getElementById('frete');
-  const fmt = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+  const descEl = document.getElementById('desconto');
 
   function total() {
     let sub = 0;
-    document.querySelectorAll('.qtd').forEach(q => {
+    document.querySelectorAll('.qtd:not(:disabled)').forEach(q => {
       sub += num(q.value) * num(q.dataset.preco);
     });
-    const t = Math.max(sub + num(freteEl.value) - num(document.getElementById('desconto').value), 0);
+    const frete = freteEl ? num(freteEl.value) : 0;
+    const t = Math.max(sub + frete - num(descEl.value), 0);
     document.getElementById('total').textContent = fmt(t);
   }
 
   function calcFrete() {
-    const km = num(document.getElementById('km').value);
-    const ped = num(document.getElementById('pedagios').value);
-    const comb = kml ? km / kml * litro : 0;
-    const frete = (comb + ped) * (1 + lucro / 100);
-    freteEl.value = frete.toFixed(2).replace('.', ',');
+    const comb = kml ? num(kmEl.value) / kml * litro : 0;
+    const f = (comb + num(pedEl.value)) * (1 + lucro / 100);
+    freteEl.value = f.toFixed(2).replace('.', ',');
     total();
   }
 
-  document.getElementById('km').addEventListener('input', calcFrete);
-  document.getElementById('pedagios').addEventListener('input', calcFrete);
-  freteEl.addEventListener('input', total);
-  document.getElementById('desconto').addEventListener('input', total);
+  function atualizarMarcas() {
+    const marcadas = Array.from(document.querySelectorAll('.marca:checked')).map(m => m.value);
+    document.querySelectorAll('.secao').forEach(s => {
+      const ativa = marcadas.includes(s.dataset.cat);
+      s.hidden = !ativa;
+      s.querySelectorAll('.qtd').forEach(q => { q.disabled = !ativa; });
+    });
+    const aviso = document.getElementById('aviso-marcar');
+    if (aviso) aviso.hidden = marcadas.length > 0;
+    total();
+  }
+
+  if (freteEl) {
+    kmEl.addEventListener('input', calcFrete);
+    pedEl.addEventListener('input', calcFrete);
+    freteEl.addEventListener('input', total);
+    calcFrete();
+  }
+  descEl.addEventListener('input', total);
   document.querySelectorAll('.qtd').forEach(q => q.addEventListener('input', total));
-  calcFrete();
+  document.querySelectorAll('.marca').forEach(m => m.addEventListener('change', atualizarMarcas));
+
+  form.addEventListener('submit', ev => {
+    if (document.querySelector('.marca') && !document.querySelector('.marca:checked')) {
+      ev.preventDefault();
+      alert('Marque Sonorização, Iluminação ou as duas.');
+    }
+  });
+
+  total();
 }
 </script>
 {% endblock %}

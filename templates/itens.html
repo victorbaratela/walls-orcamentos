@@ -1,35 +1,86 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% from '_icones.html' import icone %}
 {% block conteudo %}
-<div class="card">
-  <h2>Novo item ou serviço</h2>
-  <form method="post">
+<div class='card'>
+  <h2>Novo serviço</h2>
+  <form method='post' enctype='multipart/form-data'>
     <label>Nome</label>
-    <input name="nome" placeholder="Ex.: Caixa de som 500W" required>
+    <input name='nome' placeholder='Ex.: Caixa de som 500W' required>
     <label>Categoria</label>
-    <select name="categoria">
-      {% for cat in categorias %}<option>{{ cat }}</option>{% endfor %}
+    <select name='categoria'>
+      {% for c in categorias %}<option value='{{ c }}'>{{ NOME_CATEGORIA.get(c, c) }}</option>{% endfor %}
     </select>
     <label>Preço (R$)</label>
-    <input name="preco" inputmode="decimal" placeholder="150,00" required>
-    <button type="submit">Salvar item</button>
+    <input name='preco' inputmode='decimal' placeholder='150,00' required>
+    <label>Foto (opcional)</label>
+    <input type='file' name='imagem' accept='image/*'>
+    <button type='submit'>Salvar serviço</button>
   </form>
 </div>
-<div class="card">
-  <h2>Itens e serviços</h2>
-  <table>
-    <tr><th>Nome</th><th>Categoria</th><th>Preço</th><th></th></tr>
-    {% for i in itens %}
-    <tr>
-      <td>{{ i.nome }}</td>
-      <td>{{ i.categoria }}</td>
-      <td>R$ {{ "%.2f"|format(i.preco)|replace(".", ",") }}</td>
-      <td>
-        <form method="post" action="/itens/{{ i.id }}/excluir" onsubmit="return confirm('Excluir este item?')">
-          <button class="excluir">Excluir</button>
-        </form>
-      </td>
-    </tr>
+
+<div class='card'>
+  <h2>Serviços</h2>
+  <div class='subabas'>
+    <a class='sub{% if vista == 'lista' %} ativa{% endif %}' href='/itens?vista=lista{% if cat %}&cat={{ cat|urlencode }}{% endif %}'>{{ icone('lista') }} Lista</a>
+    <a class='sub{% if vista == 'miniaturas' %} ativa{% endif %}' href='/itens?vista=miniaturas{% if cat %}&cat={{ cat|urlencode }}{% endif %}'>{{ icone('grade') }} Miniaturas</a>
+  </div>
+  <div class='subabas'>
+    <a class='sub{% if not cat %} ativa{% endif %}' href='/itens?vista={{ vista }}'>Todos</a>
+    {% for c in categorias %}
+    <a class='sub{% if cat == c %} ativa{% endif %}' href='/itens?vista={{ vista }}&cat={{ c|urlencode }}'>{{ NOME_CATEGORIA.get(c, c) }}</a>
     {% endfor %}
-  </table>
+  </div>
+
+  {% if not itens %}
+  <p>Nenhum serviço cadastrado por aqui ainda.</p>
+
+  {% elif vista == 'miniaturas' %}
+  <div class='grade'>
+    {% for i in itens %}
+    <a class='mini-card' href='/itens/{{ i.id }}/editar'>
+      {% if i.tem_imagem %}
+      <img class='foto' src='/itens/{{ i.id }}/imagem?v={{ i.imagem_v }}' alt='{{ i.nome }}' loading='lazy'>
+      {% else %}
+      <div class='foto vazia'>{{ icone('imagem') }}</div>
+      {% endif %}
+      <div class='info'>
+        <b>{{ i.nome }}</b>
+        <span class='selo' data-t='{{ i.categoria }}'>{{ i.categoria }}</span>
+        <div style='margin-top:6px'>{{ i.preco|moeda }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class='rolagem'>
+    <table>
+      <tr><th>Serviço</th><th>Categoria</th><th>Preço</th><th></th></tr>
+      {% for i in itens %}
+      <tr>
+        <td>
+          <div class='linha-item'>
+            {% if i.tem_imagem %}
+            <img class='mini' src='/itens/{{ i.id }}/imagem?v={{ i.imagem_v }}' alt='' loading='lazy'>
+            {% else %}
+            <span class='mini vazia'>{{ icone('imagem') }}</span>
+            {% endif %}
+            <span>{{ i.nome }}</span>
+          </div>
+        </td>
+        <td><span class='selo' data-t='{{ i.categoria }}'>{{ i.categoria }}</span></td>
+        <td>{{ i.preco|moeda }}</td>
+        <td>
+          <a href='/itens/{{ i.id }}/editar'>Editar</a>
+          <form method='post' action='/itens/{{ i.id }}/excluir' style='display:inline'
+                onsubmit='return confirm(&quot;Excluir este serviço?&quot;)'>
+            <button class='excluir'>Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
