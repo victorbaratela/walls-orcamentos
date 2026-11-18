@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class='card'>
+  <h2>Orçamento {{ r.numero }} - versão v{{ ver.versao }}</h2>
+  <p><span class='selo' data-s='Fechado'>Somente leitura</span> fechada em {{ ver.fechada_em.strftime('%d/%m/%Y às %H:%M') }}</p>
+  <a class='botao sec' href='/orcamentos/{{ orc.id }}'>Voltar ao orçamento</a>
+</div>
+{% include '_resumo.html' %}
+{% endblock %}

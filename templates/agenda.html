@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class='card'>
+  <h2>Agenda</h2>
+  <div class='subabas'>
+    <a class='sub{% if filtro == 'proximos' %} ativa{% endif %}' href='/agenda'>Próximos</a>
+    <a class='sub{% if filtro == 'aprovados' %} ativa{% endif %}' href='/agenda?f=aprovados'>Aprovados</a>
+    <a class='sub{% if filtro == 'passados' %} ativa{% endif %}' href='/agenda?f=passados'>Passados</a>
+  </div>
+  {% if not dias %}
+  <p>Nenhum evento por aqui.</p>
+  {% endif %}
+  {% for dia, lista in dias %}
+  <div class='dia-cab'>{{ dia|dia_semana }}, {{ dia|data_br }}{% if dia == hoje %} (hoje){% endif %}</div>
+  {% for o in lista %}
+  <a class='evt' href='/orcamentos/{{ o.id }}'>
+    <div class='hora'>
+      {% if o.dia_todo or not o.hora_inicio %}Dia todo{% else %}{{ o.hora_inicio }}{% if o.hora_fim %}<br><small>até {{ o.hora_fim }}</small>{% endif %}{% endif %}
+    </div>
+    <div style='flex:1'>
+      <b>{{ o.cliente.nome }}</b>{% if o.evento_tipo %} - {{ o.evento_tipo }}{% endif %}<br>
+      <small>{{ o.local_nome or '' }}{% if o.cidade %}{% if o.local_nome %} · {% endif %}{{ o.cidade }}{% endif %}</small><br>
+      <span class='selo' data-t='{{ o.tipo }}'>{{ o.tipo }}</span>
+      <span class='selo' data-s='{{ o.status }}'>{{ o.status }}</span>
+      {% if o.id in conflitos %}<span class='selo' data-s='Conflito'>Conflito de horário</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+  {% endfor %}
+</div>
+{% endblock %}

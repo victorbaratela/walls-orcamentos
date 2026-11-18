@@ -1,6 +1,24 @@
 {% extends 'base.html' %}
 {% from '_icones.html' import icone %}
 {% block conteudo %}
+{% if lembretes %}
+<div class='card' style='border-left:4px solid #e5484d'>
+  <h2>Lembretes</h2>
+  {% for o, link in lembretes %}
+  <div class='lemb'>
+    <div style='flex:1'>
+      <b>{{ o.cliente.nome }}</b> - {{ o.numero or o.id }}<br>
+      <small>Relembrar em {{ o.relembrar_em|data_br }}{% if o.evento_data %} · evento em {{ o.evento_data|data_br }}{% endif %}</small>
+    </div>
+    <div class='acoes'>
+      <button type='button' onclick='window.open(this.dataset.link)' data-link='{{ link }}'>WhatsApp</button>
+      <form method='post' action='/orcamentos/{{ o.id }}/lembrete-feito'><button class='sec'>Feito</button></form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class='card'>
   <h1>Bem-vindo ao Wall's</h1>
   <p>Que tipo de orçamento você quer fazer?</p>
@@ -15,6 +33,24 @@
     </a>
   </div>
 </div>
+
+{% if proximos %}
+<div class='card'>
+  <h2>Próximos eventos</h2>
+  {% for o in proximos %}
+  <a class='evt' href='/orcamentos/{{ o.id }}'>
+    <div class='hora'>{{ o.evento_data|data_br }}</div>
+    <div style='flex:1'>
+      <b>{{ o.cliente.nome }}</b>{% if o.evento_tipo %} - {{ o.evento_tipo }}{% endif %}<br>
+      <small>{% if o.dia_todo or not o.hora_inicio %}Dia todo{% else %}{{ o.hora_inicio }}{% endif %}{% if o.cidade %} · {{ o.cidade }}{% endif %}</small><br>
+      <span class='selo' data-s='{{ o.status }}'>{{ o.status }}</span>
+    </div>
+  </a>
+  {% endfor %}
+  <a href='/agenda'>Ver agenda completa</a>
+</div>
+{% endif %}
+
 <div class='grid'>
   <div class='card'>
     <div class='numero'>{{ total_clientes }}</div>

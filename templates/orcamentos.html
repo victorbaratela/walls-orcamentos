@@ -3,24 +3,32 @@
 <div class='card'>
   <h2>Orçamentos</h2>
   <div class='subabas'>
-    <a class='sub{% if not tipo %} ativa{% endif %}' href='/orcamentos'>Todos</a>
+    <a class='sub{% if not tipo %} ativa{% endif %}' href='/orcamentos{% if status %}?status={{ status|urlencode }}{% endif %}'>Todos</a>
     {% for t in tipos %}
-    <a class='sub{% if tipo == t %} ativa{% endif %}' href='/orcamentos?tipo={{ t|urlencode }}'>{{ t }}</a>
+    <a class='sub{% if tipo == t %} ativa{% endif %}' href='/orcamentos?tipo={{ t|urlencode }}{% if status %}&status={{ status|urlencode }}{% endif %}'>{{ t }}</a>
     {% endfor %}
   </div>
-  <a class='botao' style='margin-top:0' href='/orcamentos/novo'>+ Som e iluminação</a>
-  <a class='botao' style='margin-top:0' href='/orcamentos/novo?modo=frete'>+ Frete</a>
+  <div class='subabas'>
+    <a class='sub{% if not status %} ativa{% endif %}' href='/orcamentos{% if tipo %}?tipo={{ tipo|urlencode }}{% endif %}'>Qualquer status</a>
+    {% for s in status_lista %}
+    <a class='sub{% if status == s %} ativa{% endif %}' href='/orcamentos?status={{ s|urlencode }}{% if tipo %}&tipo={{ tipo|urlencode }}{% endif %}'>{{ s }}</a>
+    {% endfor %}
+  </div>
+  <div class='acoes'>
+    <a class='botao' href='/orcamentos/novo'>+ Som e iluminação</a>
+    <a class='botao' href='/orcamentos/novo?modo=frete'>+ Frete</a>
+  </div>
   {% if not orcamentos %}
   <p>Nenhum orçamento por aqui ainda.</p>
   {% else %}
   <div class='rolagem'>
     <table>
-      <tr><th>Número</th><th>Tipo</th><th>Cliente</th><th>Total</th><th></th></tr>
+      <tr><th>Número</th><th>Cliente</th><th>Status</th><th>Total</th><th></th></tr>
       {% for o in orcamentos %}
       <tr>
-        <td><b>{{ o.numero or o.id }}</b></td>
-        <td><span class='selo' data-t='{{ o.tipo }}'>{{ o.tipo }}</span></td>
-        <td>{{ o.cliente.nome }}<br><small>{{ o.data.strftime('%d/%m/%Y') }}</small></td>
+        <td><b>{{ o.numero or o.id }}</b><br><span class='selo' data-t='{{ o.tipo }}'>{{ o.tipo }}</span></td>
+        <td>{{ o.cliente.nome }}<br><small>{% if o.evento_data %}Evento {{ o.evento_data|data_br }}{% else %}Emitido {{ o.data|data_br }}{% endif %}</small></td>
+        <td><span class='selo' data-s='{{ o.status }}'>{{ o.status }}</span>{% if not o.fechado %}<br><small>rascunho v{{ o.versao or 0 }}</small>{% endif %}</td>
         <td>{{ o.total|moeda }}</td>
         <td><a href='/orcamentos/{{ o.id }}'>Abrir</a></td>
       </tr>

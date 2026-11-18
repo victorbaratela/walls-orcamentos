@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+<div class='card'>
+  <h2>{% if orc %}Editar orçamento {{ orc.numero or orc.id }} (rascunho v{{ orc.versao or 0 }}){% else %}Novo orçamento{% endif %}</h2>
+  {% if not orc %}
+  <div class='subabas'>
+    <a class='sub{% if modo == 'equip' %} ativa{% endif %}' href='/orcamentos/novo'>Som e iluminação</a>
+    <a class='sub{% if modo == 'frete' %} ativa{% endif %}' href='/orcamentos/novo?modo=frete'>Frete</a>
+  </div>
+  {% endif %}
+  {% if not clientes %}
+  <p>Cadastre pelo menos um cliente antes. <a href='/clientes'>Ir para Clientes</a></p>
+  {% else %}
+  <form method='post' id='form-orc' data-novo='{{ 0 if orc else 1 }}'
+        data-litro='{{ cfg.preco_litro }}' data-kml='{{ cfg.km_por_litro }}'
+        data-lucro='{{ cfg.lucro_percentual }}' data-ajud='{{ v.valor_ajudante }}'>
+    <input type='hidden' name='modo' value='{{ modo }}'>
+
+    <label>Cliente</label>
+    <select name='cliente_id' required>
+      {% for c in clientes %}<option value='{{ c.id }}'{% if v.cliente_id == c.id %} selected{% endif %}>{{ c.nome }}</option>{% endfor %}
+    </select>
+
+    <h3 class='titulo-sec'>Evento</h3>
+    <label>Tipo de evento</label>
+    <select name='evento_tipo'>
+      <option value=''>Selecione</option>
+      {% for e in eventos %}<option{% if v.evento_tipo == e %} selected{% endif %}>{{ e }}</option>{% endfor %}
+    </select>
+    <label>Data do evento</label>
+    <input type='date' name='evento_data' value='{{ v.evento_data }}'>
+    <label class='check'><input type='checkbox' name='dia_todo' id='dia_todo'{% if v.dia_todo %} checked{% endif %}> Dia todo</label>
+    <div class='linha2' id='horarios'>
+      <div><label>Horário de início</label><input type='time' name='hora_inicio' value='{{ v.hora_inicio }}'></div>
+      <div><label>Horário de término</label><input type='time' name='hora_fim' value='{{ v.hora_fim }}'></div>
+    </div>
+    <label>Local do evento (nome do salão, chácara...)</label>
+    <input name='local_nome' value='{{ v.local_nome }}'>
+    <label>Endereço do local</label>
+    <input name='local_endereco' value='{{ v.local_endereco }}'>
+    <label>Cidade do evento</label>
+    <input name='cidade' value='{{ v.cidade }}'>
+
+    {% if modo == 'equip' %}
+    <h3 class='titulo-sec'>Fornecimento</h3>
+    <div class='marcar'>
+      {% for cat, lista in secoes %}
+      <label><input type='checkbox' class='marca' name='categorias' value='{{ cat }}'{% if cat in marcadas %} checked{% endif %}> {{ NOME_CATEGORIA.get(cat, cat) }}</label>
+      {% endfor %}
+    </div>
+    <p class='aviso-suave' id='aviso-marcar'>Marque o que será fornecido neste orçamento.</p>
+
+    {% for cat, lista in secoes %}
+    <div class='secao' data-cat='{{ cat }}'{% if cat not in marcadas %} hidden{% endif %}>
+      <h3 style='margin-top:20px'>{{ NOME_CATEGORIA.get(cat, cat) }}</h3>
+      {% if not lista %}
+      <p>Nenhum serviço cadastrado nesta categoria. <a href='/itens'>Cadastrar serviços</a></p>
+      {% else %}
+      <div class='rolagem'>
+        <table>
+          <tr><th>Serviço</th><th>Preço</th><th>Qtd</th></tr>
+          {% for i in lista %}
+          <tr>
+            <td>
+              <div class='linha-item'>
+                {% if i.tem_imagem %}<img class='mini' src='/itens/{{ i.id }}/imagem?v={{ i.imagem_v }}' alt='' loading='lazy'>{% endif %}
+                <span>{{ i.nome }}</span>
+              </div>
+            </td>
+            <td>{{ i.preco|moeda }}</td>
+            <td style='width:80px'>
+              <input type='number' min='0' value='{{ qtds.get(i.id, 0) }}' class='qtd'{% if cat not in marcadas %} disabled{% endif %}
+                     name='qtd_{{ i.id }}' data-preco='{{ i.preco }}'>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <h3 class='titulo-sec'>Frete</h3>
+    {% if modo == 'equip' %}
+    <label class='check'><input type='checkbox' name='incluir_frete' id='incluir_frete'{% if v.incluir_frete %} checked{% endif %}> Incluir frete até o destino</label>
+    {% endif %}
+    <div id='bloco-frete'>
+      <label>Km do trajeto (ida e volta)</label>
+      <input name='km' id='km' inputmode='decimal' value='{{ v.km }}'>
+      <label>Pedágios (R$)</label>
+      <input name='pedagios' id='pedagios' inputmode='decimal' value='{{ v.pedagios }}'>
+      <label>Valor do frete cobrado (R$) - calculado, pode ajustar</label>
+      <input name='frete' id='frete' inputmode='decimal' value='{{ v.frete }}'>
+      <div class='painel'>
+        <b>Custos do frete</b> (só você vê)<br>
+        Combustível: <b id='p-comb'>R$ 0,00</b><br>
+        Pedágios: <b id='p-ped'>R$ 0,00</b><br>
+        Lucro: <b id='p-lucro'>R$ 0,00</b>
+      </div>
+    </div>
+
+    <h3 class='titulo-sec'>Ajudantes</h3>
+    <label>Quantidade de ajudantes ({{ v.valor_ajudante|moeda }} cada)</label>
+    <input type='number' min='0' name='ajudantes' id='ajudantes' value='{{ v.ajudantes }}'>
+
+    <h3 class='titulo-sec'>Valores e observações</h3>
+    <label>Desconto (R$)</label>
+    <input name='desconto' id='desconto' inputmode='decimal' value='{{ v.desconto }}'>
+    <label>Descrição do evento (mais detalhes)</label>
+    <input name='observacoes' value='{{ v.observacoes }}' placeholder='Ex.: montagem às 18h, acesso pelos fundos'>
+
+    <h3 class='titulo-sec'>Controle</h3>
+    <label>Status</label>
+    <select name='status'>
+      {% for s in status_lista %}<option{% if v.status == s %} selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <label>Relembrar em</label>
+    <input type='date' name='relembrar_em' value='{{ v.relembrar_em }}'>
+    <p class='aviso-suave'>Nesse dia, o Início mostra um aviso com o botão para mandar WhatsApp ao cliente.</p>
+
+    <h2 style='margin-top:22px'>Total: <span id='total'>R$ 0,00</span></h2>
+    <div class='acoes'>
+      <button type='submit'>Salvar orçamento</button>
+      {% if orc %}<a class='botao sec' style='margin-top:14px' href='/orcamentos/{{ orc.id }}'>Cancelar</a>{% endif %}
+    </div>
+  </form>
+  {% endif %}
+</div>
+
+<script>
+const form = document.getElementById('form-orc');
+if (form) {
+  const $ = id => document.getElementById(id);
+  const num = v => parseFloat(String(v).replace(',', '.')) || 0;
+  const fmt = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+  const litro = num(form.dataset.litro);
+  const kml = num(form.dataset.kml);
+  const lucro = num(form.dataset.lucro);
+  const ajud = num(form.dataset.ajud);
+  const novo = form.dataset.novo === '1';
+  const incluir = $('incluir_frete');
+  const blocoFrete = $('bloco-frete');
+
+  const freteAtivo = () => !incluir || incluir.checked;
+  const combustivel = () => (kml ? num($('km').value) / kml * litro : 0);
+
+  function total() {
+    let sub = 0;
+    document.querySelectorAll('.qtd:not(:disabled)').forEach(q => {
+      sub += num(q.value) * num(q.dataset.preco);
+    });
+    const frete = freteAtivo() ? num($('frete').value) : 0;
+    const aj = num($('ajudantes').value) * ajud;
+    const t = Math.max(sub + frete + aj - num($('desconto').value), 0);
+    $('total').textContent = fmt(t);
+  }
+
+  function painel() {
+    const comb = combustivel();
+    const ped = num($('pedagios').value);
+    $('p-comb').textContent = fmt(comb);
+    $('p-ped').textContent = fmt(ped);
+    $('p-lucro').textContent = fmt(num($('frete').value) - comb - ped);
+  }
+
+  function calcFrete() {
+    const f = (combustivel() + num($('pedagios').value)) * (1 + lucro / 100);
+    $('frete').value = f.toFixed(2).replace('.', ',');
+    painel();
+    total();
+  }
+
+  function atualizarFrete() {
+    const ativo = freteAtivo();
+    blocoFrete.hidden = !ativo;
+    blocoFrete.querySelectorAll('input').forEach(i => { i.disabled = !ativo; });
+    total();
+  }
+
+  function atualizarMarcas() {
+    const marcadas = Array.from(document.querySelectorAll('.marca:checked')).map(m => m.value);
+    document.querySelectorAll('.secao').forEach(s => {
+      const ativa = marcadas.includes(s.dataset.cat);
+      s.hidden = !ativa;
+      s.querySelectorAll('.qtd').forEach(q => { q.disabled = !ativa; });
+    });
+    const aviso = $('aviso-marcar');
+    if (aviso) aviso.hidden = marcadas.length > 0;
+    total();
+  }
+
+  function atualizarHorarios() {
+    const todo = $('dia_todo').checked;
+    $('horarios').hidden = todo;
+    $('horarios').querySelectorAll('input').forEach(i => { i.disabled = todo; });
+  }
+
+  $('km').addEventListener('input', calcFrete);
+  $('pedagios').addEventListener('input', calcFrete);
+  $('frete').addEventListener('input', () => { painel(); total(); });
+  $('ajudantes').addEventListener('input', total);
+  $('desconto').addEventListener('input', total);
+  $('dia_todo').addEventListener('change', atualizarHorarios);
+  document.querySelectorAll('.qtd').forEach(q => q.addEventListener('input', total));
+  document.querySelectorAll('.marca').forEach(m => m.addEventListener('change', atualizarMarcas));
+  if (incluir) {
+    incluir.addEventListener('change', () => {
+      atualizarFrete();
+      if (incluir.checked && novo) calcFrete();
+    });
+  }
+
+  form.addEventListener('submit', ev => {
+    if (document.querySelector('.marca') && !document.querySelector('.marca:checked')) {
+      ev.preventDefault();
+      alert('Marque Sonorização, Iluminação ou as duas.');
+    }
+  });
+
+  atualizarHorarios();
+  atualizarMarcas();
+  atualizarFrete();
+  painel();
+  if (novo && freteAtivo()) calcFrete();
+  total();
+}
+</script>
+{% endblock %}

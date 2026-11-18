@@ -1,0 +1,58 @@
+<div class='card'>
+  <p><b>Cliente:</b> {{ r.cliente }}{% if r.telefone %} - {{ r.telefone }}{% endif %}<br>
+     <b>Emitido em:</b> {{ r.emissao }}</p>
+
+  {% if r.evento_tipo or r.evento_data or r.local_nome or r.cidade %}
+  <h3>Evento</h3>
+  <p>
+    {% if r.evento_tipo %}<b>Tipo:</b> {{ r.evento_tipo }}<br>{% endif %}
+    {% if r.evento_data %}<b>Data:</b> {{ r.evento_data }}{% if r.horario %} - {{ r.horario }}{% endif %}<br>{% endif %}
+    {% if r.local_nome %}<b>Local:</b> {{ r.local_nome }}<br>{% endif %}
+    {% if r.local_endereco %}<b>Endereço:</b> {{ r.local_endereco }}<br>{% endif %}
+    {% if r.cidade %}<b>Cidade:</b> {{ r.cidade }}{% endif %}
+  </p>
+  {% endif %}
+
+  <h3>Serviços e valores</h3>
+  <div class='rolagem'>
+    <table>
+      <tr><th>Serviço</th><th>Qtd</th><th>Valor</th></tr>
+      {% for g in r.grupos %}
+      {% if r.grupos|length > 1 %}
+      <tr><td colspan='3' style='background:#f4f5f7;font-weight:bold'>{{ NOME_CATEGORIA.get(g.categoria) or g.categoria or 'Outros' }}</td></tr>
+      {% endif %}
+      {% for i in g.itens %}
+      <tr><td>{{ i.nome }}</td><td>{{ i.quantidade }}</td><td>{{ i.subtotal|moeda }}</td></tr>
+      {% endfor %}
+      {% if r.grupos|length > 1 %}
+      <tr><td colspan='2'><i>Subtotal</i></td><td><i>{{ g.subtotal|moeda }}</i></td></tr>
+      {% endif %}
+      {% endfor %}
+      {% if r.frete %}
+      <tr><td>Frete{% if r.km %} ({{ '%g'|format(r.km) }} km){% endif %}</td><td></td><td>{{ r.frete|moeda }}</td></tr>
+      {% endif %}
+      {% if r.ajudantes %}
+      <tr><td>Ajudantes ({{ r.ajudantes }} x {{ r.valor_ajudante|moeda }})</td><td></td><td>{{ r.total_ajudantes|moeda }}</td></tr>
+      {% endif %}
+      {% if r.desconto %}
+      <tr><td>Desconto</td><td></td><td>-{{ r.desconto|moeda }}</td></tr>
+      {% endif %}
+      <tr><th>Total</th><th></th><th>{{ r.total|moeda }}</th></tr>
+    </table>
+  </div>
+  {% if r.observacoes %}<p><b>Descrição:</b> {{ r.observacoes }}</p>{% endif %}
+</div>
+
+{% if r.frete and r.combustivel is not none %}
+{% set lucro = r.frete - r.combustivel - r.pedagios %}
+<div class='card'>
+  <h3>Custos e lucro do frete</h3>
+  <p class='aviso-suave' style='margin-top:0'>Só você vê isto. Não vai na mensagem para o cliente.</p>
+  <table>
+    <tr><td>Combustível</td><td>{{ r.combustivel|moeda }}</td></tr>
+    <tr><td>Pedágios</td><td>{{ r.pedagios|moeda }}</td></tr>
+    <tr><td><b>Lucro</b></td><td><b>{{ lucro|moeda }}</b></td></tr>
+    <tr><td>Frete cobrado</td><td>{{ r.frete|moeda }}</td></tr>
+  </table>
+</div>
+{% endif %}

@@ -1,45 +1,75 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-{% set grupos = orc.grupos %}
 <div class='card'>
-  <h2>Orçamento {{ orc.numero or orc.id }}</h2>
-  <p><span class='selo' data-t='{{ orc.tipo }}'>{{ orc.tipo }}</span></p>
-  <p><b>Cliente:</b> {{ orc.cliente.nome }}<br>
-     <b>Data:</b> {{ orc.data.strftime('%d/%m/%Y') }}</p>
-  <div class='rolagem'>
-    <table>
-      <tr><th>Serviço</th><th>Qtd</th><th>Valor</th></tr>
-      {% for cat, lista, sub in grupos %}
-      {% if grupos|length > 1 %}
-      <tr><td colspan='3' style='background:#f4f5f7;font-weight:bold'>{{ NOME_CATEGORIA.get(cat) or cat or 'Outros' }}</td></tr>
-      {% endif %}
-      {% for i in lista %}
-      <tr><td>{{ i.nome }}</td><td>{{ i.quantidade }}</td><td>{{ i.subtotal|moeda }}</td></tr>
-      {% endfor %}
-      {% if grupos|length > 1 %}
-      <tr><td colspan='2'><i>Subtotal</i></td><td><i>{{ sub|moeda }}</i></td></tr>
-      {% endif %}
-      {% endfor %}
-      {% if orc.frete %}
-      <tr><td>Frete{% if orc.km %} ({{ '%g'|format(orc.km) }} km){% endif %}</td><td></td><td>{{ orc.frete|moeda }}</td></tr>
-      {% endif %}
-      {% if orc.desconto %}
-      <tr><td>Desconto</td><td></td><td>-{{ orc.desconto|moeda }}</td></tr>
-      {% endif %}
-      <tr><th>Total</th><th></th><th>{{ orc.total|moeda }}</th></tr>
-    </table>
+  <h2>Orçamento {{ r.numero }}</h2>
+  <p>
+    <span class='selo' data-t='{{ orc.tipo }}'>{{ orc.tipo }}</span>
+    <span class='selo' data-s='{{ orc.status }}'>{{ orc.status }}</span>
+    {% if orc.fechado %}
+    <span class='selo' data-s='Fechado'>Versão v{{ orc.versao or 0 }} fechada</span>
+    {% else %}
+    <span class='selo' data-s='Rascunho'>Rascunho v{{ orc.versao or 0 }}</span>
+    {% endif %}
+  </p>
+  {% if enviar and orc.fechado %}
+  <p class='ok'>Versão v{{ orc.versao or 0 }} fechada! Agora é só enviar pelo WhatsApp, mais abaixo.</p>
+  {% endif %}
+  <div class='acoes'>
+    {% if not orc.fechado %}
+    <a class='botao' href='/orcamentos/{{ orc.id }}/editar'>Editar</a>
+    <form method='post' action='/orcamentos/{{ orc.id }}/fechar'><button type='submit'>Fechar e enviar</button></form>
+    {% else %}
+    <form method='post' action='/orcamentos/{{ orc.id }}/nova-versao'
+          onsubmit='return confirm(&quot;Isso inicia a versão v{{ (orc.versao or 0) + 1 }}. A v{{ orc.versao or 0 }} continua guardada. Continuar?&quot;)'>
+      <button type='submit' class='sec'>Editar (nova versão)</button>
+    </form>
+    {% endif %}
+    {% if orc.evento_data %}<a class='botao sec' href='/orcamentos/{{ orc.id }}/calendario.ics'>Adicionar ao calendário</a>{% endif %}
   </div>
+  {% if not orc.fechado %}
+  <p class='aviso-suave'>Este orçamento ainda é um rascunho. Ao tocar em Fechar e enviar, a versão v{{ orc.versao or 0 }} fica guardada e o envio pelo WhatsApp é liberado.</p>
+  {% endif %}
+</div>
+
+{% include '_resumo.html' %}
+
+{% if orc.fechado %}
+<div class='card'>
+  <h2>Mensagem para o cliente</h2>
+  <textarea id='texto' rows='14' style='font-size:15px'>{{ texto }}</textarea>
+  <div class='acoes' style='margin-top:12px'>
+    <button type='button' onclick='window.open(this.dataset.link)' data-link='{{ link }}'>Enviar pelo WhatsApp</button>
+    <button type='button' class='sec' onclick='copiar()'>Copiar texto</button>
+  </div>
+</div>
+{% endif %}
+
+<div class='card'>
+  <h3>Controle</h3>
+  <form method='post' action='/orcamentos/{{ orc.id }}/controle'>
+    <label>Status</label>
+    <select name='status'>
+      {% for s in status_lista %}<option{% if orc.status == s %} selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+    <label>Relembrar em</label>
+    <input type='date' name='relembrar_em' value='{{ orc.relembrar_em.isoformat() if orc.relembrar_em else '' }}'>
+    <button type='submit'>Salvar controle</button>
+  </form>
 </div>
 
 <div class='card'>
-  <h2>Mensagem para o cliente</h2>
-  <textarea id='texto' rows='14' style='width:100%;font-size:15px;padding:10px'>{{ texto }}</textarea>
-  <button type='button' onclick='window.open(this.dataset.link)' data-link='{{ link }}'>Enviar pelo WhatsApp</button>
-  <button type='button' onclick='copiar()'>Copiar texto</button>
+  <h3>Versões fechadas</h3>
+  {% if not orc.versoes %}
+  <p>Nenhuma versão fechada ainda.</p>
+  {% else %}
+  {% for ver in orc.versoes %}
+  <p><a href='/orcamentos/{{ orc.id }}/versao/{{ ver.versao }}'><b>v{{ ver.versao }}</b></a> - fechada em {{ ver.fechada_em.strftime('%d/%m/%Y às %H:%M') }}</p>
+  {% endfor %}
+  {% endif %}
 </div>
 
 <form method='post' action='/orcamentos/{{ orc.id }}/excluir'
-      onsubmit='return confirm(&quot;Excluir este orçamento?&quot;)'>
+      onsubmit='return confirm(&quot;Excluir este orçamento e todas as versões?&quot;)'>
   <button class='excluir'>Excluir orçamento</button>
 </form>
 

@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block conteudo %}
 <div class='card'>
-  <h2>Configurações do frete</h2>
-  <p>Esses valores são usados para calcular o frete de cada orçamento.</p>
+  <h2>Ajustes do frete e dos ajudantes</h2>
+  <p>Esses valores são usados nos orçamentos novos.</p>
   <form method='post'>
     <label>Preço do litro do combustível (R$)</label>
     <input name='preco_litro' inputmode='decimal' value='{{ cfg.preco_litro }}' required>
@@ -12,7 +12,9 @@
     <input name='pedagio_padrao' inputmode='decimal' value='{{ cfg.pedagio_padrao }}' required>
     <label>Lucro sobre o frete (%)</label>
     <input name='lucro_percentual' inputmode='decimal' value='{{ cfg.lucro_percentual }}' required>
-    <button type='submit'>Salvar configurações</button>
+    <label>Valor padrão de cada ajudante (R$)</label>
+    <input name='valor_ajudante' inputmode='decimal' value='{{ cfg.valor_ajudante or 0 }}' required>
+    <button type='submit'>Salvar ajustes</button>
   </form>
 </div>
 {% endblock %}
