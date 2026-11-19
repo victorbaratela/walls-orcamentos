@@ -29,7 +29,7 @@
     </select>
     <label>Data do evento</label>
     <input type='date' name='evento_data' value='{{ v.evento_data }}'>
-    <label class='check'><input type='checkbox' name='dia_todo' id='dia_todo'{% if v.dia_todo %} checked{% endif %}> Dia todo</label>
+    <label class='check'><input type='checkbox' name='dia_todo' id='dia_todo'{% if v.dia_todo %} checked{% endif %}> Dia todo na agenda (bloqueia o dia inteiro; os horários continuam registrados)</label>
     <div class='linha2' id='horarios'>
       <div><label>Horário de início</label><input type='time' name='hora_inicio' value='{{ v.hora_inicio }}'></div>
       <div><label>Horário de término</label><input type='time' name='hora_fim' value='{{ v.hora_fim }}'></div>
@@ -191,7 +191,7 @@ if (form) {
   }
 
   function atualizarHorarios() {
-    const todo = $('dia_todo').checked;
+    const todo = false;
     $('horarios').hidden = todo;
     $('horarios').querySelectorAll('input').forEach(i => { i.disabled = todo; });
   }

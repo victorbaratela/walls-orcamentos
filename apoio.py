@@ -70,7 +70,7 @@ def processar_imagem(arquivo):
 # Resumo do orçamento e mensagens
 # ---------------------------------------------------------------
 def texto_horario(o):
-    if o.dia_todo:
+    if o.dia_todo and not o.hora_inicio:
         return 'Dia todo'
     if o.hora_inicio and o.hora_fim:
         return o.hora_inicio + ' às ' + o.hora_fim
@@ -134,14 +134,14 @@ def texto_whatsapp(r):
             titulo = NOME_CATEGORIA.get(g['categoria']) or g['categoria'] or 'Outros'
             L.append('*' + titulo + '*')
         for i in g['itens']:
-            L.append('%dx %s - %s' % (i['quantidade'], i['nome'], moeda(i['subtotal'])))
+		L.append('%dx %s' % (i['quantidade'], i['nome']))
         if varios:
-            L.append('Subtotal: ' + moeda(g['subtotal']))
+            
             L.append('')
-    if r['frete']:
+    if r['frete'] and r['tipo'] == 'Frete':
         rotulo = 'Frete (%g km)' % r['km'] if r['km'] else 'Frete'
         L.append(rotulo + ': ' + moeda(r['frete']))
-    if r['ajudantes']:
+    if r['ajudantes'] and r['tipo'] == 'Frete':
         L.append('Ajudantes (%d x %s): %s' % (
             r['ajudantes'], moeda(r['valor_ajudante']), moeda(r['total_ajudantes'])))
     if r['desconto']:
@@ -227,7 +227,7 @@ def gerar_ics(o):
     titulo = ' - '.join(p for p in (o.evento_tipo or 'Evento', o.cliente.nome) if p)
     local = ', '.join(p for p in (o.local_nome, o.local_endereco, o.cidade) if p)
     descricao = ('Orçamento ' + (o.numero or str(o.id)) + ' (' + (o.status or '') +
-                 ') - Total ' + moeda(o.total))
+                 ') - Total ' + moeda(o.total) + (' - Horário combinado: ' + texto_horario(o) if o.hora_inicio else ''))
     linhas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Walls//Orcamentos//PT',
               'BEGIN:VEVENT', f'UID:orc-{o.id}@walls',
               f'DTSTAMP:{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}']

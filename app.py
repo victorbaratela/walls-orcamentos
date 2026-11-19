@@ -475,8 +475,8 @@ def aplicar_form(orc, form, cfg):
     orc.evento_tipo = form.get('evento_tipo') or None
     orc.evento_data = para_data(form.get('evento_data'))
     orc.dia_todo = 1 if form.get('dia_todo') else 0
-    orc.hora_inicio = None if orc.dia_todo else (form.get('hora_inicio') or None)
-    orc.hora_fim = None if orc.dia_todo else (form.get('hora_fim') or None)
+    orc.hora_inicio = form.get('hora_inicio') or None
+	orc.hora_fim = form.get('hora_fim') or None
     orc.local_nome = form.get('local_nome') or None
     orc.local_endereco = form.get('local_endereco') or None
     orc.cidade = form.get('cidade') or None

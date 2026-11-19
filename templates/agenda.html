@@ -15,7 +15,7 @@
   {% for o in lista %}
   <a class='evt' href='/orcamentos/{{ o.id }}'>
     <div class='hora'>
-      {% if o.dia_todo or not o.hora_inicio %}Dia todo{% else %}{{ o.hora_inicio }}{% if o.hora_fim %}<br><small>até {{ o.hora_fim }}</small>{% endif %}{% endif %}
+      {% if o.dia_todo %}Dia todo{% if o.hora_inicio %}<br><small>{{ o.hora_inicio }}{% if o.hora_fim %} às {{ o.hora_fim }}{% endif %}</small>{% endif %}{% elif o.hora_inicio %}{{ o.hora_inicio }}{% if o.hora_fim %}<br><small>até {{ o.hora_fim }}</small>{% endif %}{% else %}Sem horário{% endif %}
     </div>
     <div style='flex:1'>
       <b>{{ o.cliente.nome }}</b>{% if o.evento_tipo %} - {{ o.evento_tipo }}{% endif %}<br>

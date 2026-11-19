@@ -42,7 +42,7 @@
     <div class='hora'>{{ o.evento_data|data_br }}</div>
     <div style='flex:1'>
       <b>{{ o.cliente.nome }}</b>{% if o.evento_tipo %} - {{ o.evento_tipo }}{% endif %}<br>
-      <small>{% if o.dia_todo or not o.hora_inicio %}Dia todo{% else %}{{ o.hora_inicio }}{% endif %}{% if o.cidade %} · {{ o.cidade }}{% endif %}</small><br>
+      <small>{% if o.hora_inicio %}{{ o.hora_inicio }}{% else %}Dia todo{% endif %}{% if o.cidade %} · {{ o.cidade }}{% endif %}</small><br>
       <span class='selo' data-s='{{ o.status }}'>{{ o.status }}</span>
     </div>
   </a>
