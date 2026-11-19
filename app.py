@@ -525,7 +525,7 @@ def aplicar_form(orc, form, cfg):
                 item_id=item.id,
                 categoria=item.categoria,
                 nome=antigo.nome if antigo else item.nome,
-                preco_unit=antigo.preco_unit if antigo else item.preco,
+                preco_unit=para_float(form.get(f'preco_{item.id}'), 				antigo.preco_unit if antigo else item.preco),
                 quantidade=qtd))
     orc.itens = novos
     return True
@@ -585,7 +585,7 @@ def mostrar_form(orc, modo, cfg):
         marcadas = [orc.tipo]
     return render_template(
         'orcamento_form.html',
-        orc=orc, modo=modo, cfg=cfg, secoes=secoes, qtds=qtds,
+        orc=orc, modo=modo, cfg=cfg, secoes=secoes, qtds=qtds, precos={i.item_id: i.preco_unit for i in orc.itens} if orc else {},
         marcadas=marcadas, v=valores_form(orc, cfg),
         eventos=EVENTOS, status_lista=STATUS,
         clientes=Cliente.query.order_by(Cliente.nome).all(),

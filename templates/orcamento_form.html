@@ -67,10 +67,10 @@
                 <span>{{ i.nome }}</span>
               </div>
             </td>
-            <td>{{ i.preco|moeda }}</td>
+            <td style='width:125px'><input class='preco-in' id='preco_{{ i.id }}' name='preco_{{ i.id }}' inputmode='decimal' value='{{ ('%.2f'|format(precos.get(i.id, i.preco)))|replace('.', ',') }}'{% if cat not in marcadas %} disabled{% endif %}>{% if (precos.get(i.id, i.preco)|round(2)) != (i.preco|round(2)) %}<small>Cadastro: {{ i.preco|moeda }} <button type='button' class='sec usar' style='margin:0;padding:2px 8px;font-size:12px' data-alvo='preco_{{ i.id }}' data-valor='{{ ('%.2f'|format(i.preco))|replace('.', ',') }}'>usar</button></small>{% endif %}</td>
             <td style='width:80px'>
               <input type='number' min='0' value='{{ qtds.get(i.id, 0) }}' class='qtd'{% if cat not in marcadas %} disabled{% endif %}
-                     name='qtd_{{ i.id }}' data-preco='{{ i.preco }}'>
+                     name='qtd_{{ i.id }}' data-item='{{ i.id }}'>
             </td>
           </tr>
           {% endfor %}
@@ -148,7 +148,7 @@ if (form) {
   function total() {
     let sub = 0;
     document.querySelectorAll('.qtd:not(:disabled)').forEach(q => {
-      sub += num(q.value) * num(q.dataset.preco);
+      sub += num(q.value) * num(document.getElementById('preco_' + q.dataset.item).value);
     });
     const frete = freteAtivo() ? num($('frete').value) : 0;
     const aj = num($('ajudantes').value) * ajud;
@@ -183,7 +183,7 @@ if (form) {
     document.querySelectorAll('.secao').forEach(s => {
       const ativa = marcadas.includes(s.dataset.cat);
       s.hidden = !ativa;
-      s.querySelectorAll('.qtd').forEach(q => { q.disabled = !ativa; });
+      s.querySelectorAll('.qtd, .preco-in').forEach(q => { q.disabled = !ativa; });
     });
     const aviso = $('aviso-marcar');
     if (aviso) aviso.hidden = marcadas.length > 0;
@@ -202,7 +202,7 @@ if (form) {
   $('ajudantes').addEventListener('input', total);
   $('desconto').addEventListener('input', total);
   $('dia_todo').addEventListener('change', atualizarHorarios);
-  document.querySelectorAll('.qtd').forEach(q => q.addEventListener('input', total));
+  document.querySelectorAll('.qtd, .preco-in').forEach(q => q.addEventListener('input', total)); document.querySelectorAll('.usar').forEach(b => b.addEventListener('click', () => { $(b.dataset.alvo).value = b.dataset.valor; b.parentElement.hidden = true; total(); }));
   document.querySelectorAll('.marca').forEach(m => m.addEventListener('change', atualizarMarcas));
   if (incluir) {
     incluir.addEventListener('change', () => {
