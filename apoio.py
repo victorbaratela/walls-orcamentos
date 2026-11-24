@@ -134,9 +134,8 @@ def texto_whatsapp(r):
             titulo = NOME_CATEGORIA.get(g['categoria']) or g['categoria'] or 'Outros'
             L.append('*' + titulo + '*')
         for i in g['itens']:
-		L.append('%dx %s' % (i['quantidade'], i['nome']))
+            L.append('%dx %s' % (i['quantidade'], i['nome']))
         if varios:
-            
             L.append('')
     if r['frete'] and r['tipo'] == 'Frete':
         rotulo = 'Frete (%g km)' % r['km'] if r['km'] else 'Frete'
@@ -146,7 +145,7 @@ def texto_whatsapp(r):
             r['ajudantes'], moeda(r['valor_ajudante']), moeda(r['total_ajudantes'])))
     if r['desconto']:
         L.append('Desconto: -' + moeda(r['desconto']))
-    L += ['', '*Total: ' + moeda(r['total']) + '*']
+    L += ['*Total: ' + moeda(r['total']) + '*'] if L[-1] == '' else ['', '*Total: ' + moeda(r['total']) + '*']
     if r['observacoes']:
         L += ['', r['observacoes']]
     L += ['', 'Validade: 15 dias a partir da emissão.']
