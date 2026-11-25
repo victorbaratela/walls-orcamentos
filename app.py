@@ -129,6 +129,8 @@ class Orcamento(db.Model):
     local_nome = db.Column(db.String(120))
     local_endereco = db.Column(db.String(200))
     cidade = db.Column(db.String(80))
+    local_retirada = db.Column(db.String(200))
+    local_entrega = db.Column(db.String(200))
     relembrar_em = db.Column(db.Date)
     # valores
     km = db.Column(db.Float, default=0)
@@ -252,6 +254,8 @@ NOVAS_COLUNAS = [
     ('config', 'valor_ajudante', 'FLOAT DEFAULT 0'),
     ('item', 'imagem_v', 'INTEGER DEFAULT 0'),
     ('orcamento_item', 'categoria', 'VARCHAR(30)'),
+    ('orcamento', 'local_retirada', 'VARCHAR(200)'),
+    ('orcamento', 'local_entrega', 'VARCHAR(200)'),
     ('orcamento_item', 'item_id', 'INTEGER'),
     ('orcamento', 'tipo', "VARCHAR(20) DEFAULT 'Som'"),
     ('orcamento', 'numero', 'VARCHAR(20)'),
@@ -480,6 +484,8 @@ def aplicar_form(orc, form, cfg):
     orc.local_nome = form.get('local_nome') or None
     orc.local_endereco = form.get('local_endereco') or None
     orc.cidade = form.get('cidade') or None
+    orc.local_retirada = form.get('local_retirada') or None
+    orc.local_entrega = form.get('local_entrega') or None
     orc.observacoes = form.get('observacoes') or None
     orc.desconto = para_float(form.get('desconto'))
     status = form.get('status')
@@ -539,6 +545,7 @@ def valores_form(orc, cfg):
             'cliente_id': None, 'evento_tipo': '', 'evento_data': '',
             'dia_todo': False, 'hora_inicio': '', 'hora_fim': '',
             'local_nome': '', 'local_endereco': '', 'cidade': '',
+            'local_retirada': '', 'local_entrega': '',
             'incluir_frete': False, 'km': '0',
             'pedagios': fmt_num(cfg.pedagio_padrao), 'frete': '0',
             'ajudantes': 0, 'valor_ajudante': cfg.valor_ajudante or 0,
@@ -559,6 +566,8 @@ def valores_form(orc, cfg):
         'local_nome': orc.local_nome or '',
         'local_endereco': orc.local_endereco or '',
         'cidade': orc.cidade or '',
+        'local_retirada': orc.local_retirada or '',
+        'local_entrega': orc.local_entrega or '',
         'incluir_frete': bool(orc.frete),
         'km': f'{orc.km or 0:g}',
         'pedagios': fmt_num(orc.pedagios),

@@ -2,11 +2,13 @@
   <p><b>Cliente:</b> {{ r.cliente }}{% if r.telefone %} - {{ r.telefone }}{% endif %}<br>
      <b>Emitido em:</b> {{ r.emissao }}</p>
 
-  {% if r.evento_tipo or r.evento_data or r.local_nome or r.cidade %}
-  <h3>Evento</h3>
+  {% if r.evento_tipo or r.evento_data or r.local_nome or r.cidade or r.local_retirada or r.local_entrega %}
+  <h3>{% if r.tipo == 'Frete' %}Data e locais{% else %}Evento{% endif %}</h3>
   <p>
     {% if r.evento_tipo %}<b>Tipo:</b> {{ r.evento_tipo }}<br>{% endif %}
     {% if r.evento_data %}<b>Data:</b> {{ r.evento_data }}{% if r.horario %} - {{ r.horario }}{% endif %}<br>{% endif %}
+    {% if r.local_retirada %}<b>Retirada:</b> {{ r.local_retirada }}<br>{% endif %}
+    {% if r.local_entrega %}<b>Entrega:</b> {{ r.local_entrega }}<br>{% endif %}
     {% if r.local_nome %}<b>Local:</b> {{ r.local_nome }}<br>{% endif %}
     {% if r.local_endereco %}<b>Endereço:</b> {{ r.local_endereco }}<br>{% endif %}
     {% if r.cidade %}<b>Cidade:</b> {{ r.cidade }}{% endif %}

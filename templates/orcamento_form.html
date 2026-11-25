@@ -12,34 +12,47 @@
   <p>Cadastre pelo menos um cliente antes. <a href='/clientes'>Ir para Clientes</a></p>
   {% else %}
   <form method='post' id='form-orc' data-novo='{{ 0 if orc else 1 }}'
+ data-chave='{{ ('edit_' ~ orc.id) if orc else ('novo_' ~ modo) }}'
         data-litro='{{ cfg.preco_litro }}' data-kml='{{ cfg.km_por_litro }}'
         data-lucro='{{ cfg.lucro_percentual }}' data-ajud='{{ v.valor_ajudante }}'>
     <input type='hidden' name='modo' value='{{ modo }}'>
+    <p class='ok' id='aviso-rasc' hidden>Rascunho recuperado automaticamente. Para descartar, toque em Cancelar orçamento.</p>
 
     <label>Cliente</label>
     <select name='cliente_id' required>
       {% for c in clientes %}<option value='{{ c.id }}'{% if v.cliente_id == c.id %} selected{% endif %}>{{ c.nome }}</option>{% endfor %}
     </select>
 
+    {% if modo == 'frete' %}
+    <h3 class='titulo-sec'>Data e locais</h3>
+    {% else %}
     <h3 class='titulo-sec'>Evento</h3>
     <label>Tipo de evento</label>
     <select name='evento_tipo'>
       <option value=''>Selecione</option>
       {% for e in eventos %}<option{% if v.evento_tipo == e %} selected{% endif %}>{{ e }}</option>{% endfor %}
     </select>
-    <label>Data do evento</label>
+    {% endif %}
+    <label>{% if modo == 'frete' %}Data do frete{% else %}Data do evento{% endif %}</label>
     <input type='date' name='evento_data' value='{{ v.evento_data }}'>
     <label class='check'><input type='checkbox' name='dia_todo' id='dia_todo'{% if v.dia_todo %} checked{% endif %}> Dia todo na agenda (bloqueia o dia inteiro; os horários continuam registrados)</label>
     <div class='linha2' id='horarios'>
       <div><label>Horário de início</label><input type='time' name='hora_inicio' value='{{ v.hora_inicio }}'></div>
       <div><label>Horário de término</label><input type='time' name='hora_fim' value='{{ v.hora_fim }}'></div>
     </div>
+    {% if modo == 'frete' %}
+    <label>Local de retirada</label>
+    <input name='local_retirada' value='{{ v.local_retirada }}' placeholder='Endereço ou nome do local'>
+    <label>Local de entrega</label>
+    <input name='local_entrega' value='{{ v.local_entrega }}' placeholder='Endereço ou nome do local'>
+    {% else %}
     <label>Local do evento (nome do salão, chácara...)</label>
     <input name='local_nome' value='{{ v.local_nome }}'>
     <label>Endereço do local</label>
     <input name='local_endereco' value='{{ v.local_endereco }}'>
     <label>Cidade do evento</label>
     <input name='cidade' value='{{ v.cidade }}'>
+    {% endif %}
 
     {% if modo == 'equip' %}
     <h3 class='titulo-sec'>Fornecimento</h3>
@@ -107,7 +120,7 @@
     <h3 class='titulo-sec'>Valores e observações</h3>
     <label>Desconto (R$)</label>
     <input name='desconto' id='desconto' inputmode='decimal' value='{{ v.desconto }}'>
-    <label>Descrição do evento (mais detalhes)</label>
+    <label>Descrição{% if modo == 'equip' %} do evento{% endif %} (mais detalhes)</label>
     <input name='observacoes' value='{{ v.observacoes }}' placeholder='Ex.: montagem às 18h, acesso pelos fundos'>
 
     <h3 class='titulo-sec'>Controle</h3>
@@ -122,8 +135,7 @@
     <h2 style='margin-top:22px'>Total: <span id='total'>R$ 0,00</span></h2>
     <div class='acoes'>
       <button type='submit'>Salvar orçamento</button>
-      {% if orc %}<a class='botao sec' style='margin-top:14px' href='/orcamentos/{{ orc.id }}'>Cancelar</a>{% endif %}
-    </div>
+      <button type='button' class='sec' id='cancelar' style='margin-top:14px' data-destino='{{ ('/orcamentos/' ~ orc.id) if orc else '/orcamentos' }}'>{% if orc %}Cancelar edição{% else %}Cancelar orçamento{% endif %}</button>    </div>
   </form>
   {% endif %}
 </div>
@@ -196,6 +208,37 @@ if (form) {
     $('horarios').querySelectorAll('input').forEach(i => { i.disabled = todo; });
   }
 
+  const chave = 'walls_rasc_' + form.dataset.chave;
+
+  function salvarRascunho() {
+    try {
+      const dados = Array.from(new FormData(form).entries());
+      localStorage.setItem(chave, JSON.stringify({ t: Date.now(), dados: dados }));
+    } catch (e) {}
+  }
+
+  function limparRascunho() {
+    try { localStorage.removeItem(chave); } catch (e) {}
+  }
+
+  function restaurarRascunho() {
+    let rasc = null;
+    try { rasc = JSON.parse(localStorage.getItem(chave)); } catch (e) {}
+    if (!rasc || !rasc.dados || Date.now() - rasc.t > 604800000) return false;
+    const pares = rasc.dados;
+    form.querySelectorAll('input[type=checkbox]').forEach(c => {
+      c.checked = pares.some(p => p[0] === c.name && p[1] === c.value);
+    });
+    atualizarMarcas();
+    atualizarFrete();
+    atualizarHorarios();
+    form.querySelectorAll('input:not([type=checkbox]):not([type=hidden]), select, textarea').forEach(el => {
+      const achados = pares.filter(p => p[0] === el.name);
+      if (el.name && achados.length) el.value = achados[achados.length - 1][1];
+    });
+    return true;
+  }
+
   $('km').addEventListener('input', calcFrete);
   $('pedagios').addEventListener('input', calcFrete);
   $('frete').addEventListener('input', () => { painel(); total(); });
@@ -215,6 +258,8 @@ if (form) {
     if (document.querySelector('.marca') && !document.querySelector('.marca:checked')) {
       ev.preventDefault();
       alert('Marque Sonorização, Iluminação ou as duas.');
+    } else {
+      limparRascunho();
     }
   });
 
@@ -224,6 +269,20 @@ if (form) {
   painel();
   if (novo && freteAtivo()) calcFrete();
   total();
+
+  if (restaurarRascunho()) {
+    painel();
+    total();
+    $('aviso-rasc').hidden = false;
+  }
+  form.addEventListener('input', salvarRascunho);
+  form.addEventListener('change', salvarRascunho);
+  $('cancelar').addEventListener('click', () => {
+    if (confirm('Descartar o que você preencheu neste orçamento?')) {
+      limparRascunho();
+      window.location.href = $('cancelar').dataset.destino;
+    }
+  });
 }
 </script>
 {% endblock %}

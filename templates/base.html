@@ -95,6 +95,9 @@
     .evt:hover { border-color: var(--ouro); }
     .evt .hora { width: 58px; flex: none; font-weight: bold; font-size: 14px; }
 
+    .rasc { background: #fff3cd; border-bottom: 1px solid #f0d98a; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px; }
+    .rasc .botao, .rasc button { margin: 0; padding: 6px 12px; font-size: 14px; }
+
     @media (min-width: 768px) {
       body { padding-bottom: 0; }
       .abas { position: static; justify-content: center; border-top: 0; border-bottom: 1px solid #e2e4e8; }
@@ -122,5 +125,59 @@
   <main>
     {% block conteudo %}{% endblock %}
   </main>
+
+  <script>
+  (function () {
+    if (!document.querySelector('.abas')) return;
+    const PREFIXO = 'walls_rasc_';
+    const achados = [];
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const chave = localStorage.key(i);
+        if (!chave || chave.indexOf(PREFIXO) !== 0) continue;
+        let rasc = null;
+        try { rasc = JSON.parse(localStorage.getItem(chave)); } catch (e) {}
+        if (!rasc || Date.now() - rasc.t > 604800000) { localStorage.removeItem(chave); continue; }
+        achados.push(chave);
+      }
+    } catch (e) { return; }
+    achados.forEach(chave => {
+      const nome = chave.slice(PREFIXO.length);
+      let destino = '/orcamentos/novo';
+      let rotulo = 'Novo orçamento de som e iluminação em andamento.';
+      if (nome === 'novo_frete') {
+        destino = '/orcamentos/novo?modo=frete';
+        rotulo = 'Novo orçamento de frete em andamento.';
+      } else if (nome.indexOf('edit_') === 0) {
+        destino = '/orcamentos/' + nome.slice(5) + '/editar';
+        rotulo = 'Edição de orçamento em andamento.';
+      } else if (nome !== 'novo_equip') {
+        return;
+      }
+      if (location.pathname + location.search === destino) return;
+      const faixa = document.createElement('div');
+      faixa.className = 'rasc';
+      const texto = document.createElement('span');
+      texto.textContent = rotulo;
+      const ir = document.createElement('a');
+      ir.className = 'botao';
+      ir.href = destino;
+      ir.textContent = 'Continuar';
+      const descartar = document.createElement('button');
+      descartar.type = 'button';
+      descartar.className = 'sec';
+      descartar.textContent = 'Descartar';
+      descartar.addEventListener('click', () => {
+        if (confirm('Descartar este orçamento em andamento?')) {
+          localStorage.removeItem(chave);
+          faixa.remove();
+        }
+      });
+      faixa.append(texto, ir, descartar);
+      document.querySelector('header').after(faixa);
+    });
+  })();
+  </script>
+
 </body>
 </html>

@@ -103,6 +103,8 @@ def resumo(orc):
         'local_nome': orc.local_nome or '',
         'local_endereco': orc.local_endereco or '',
         'cidade': orc.cidade or '',
+        'local_retirada': orc.local_retirada or '',
+        'local_entrega': orc.local_entrega or '',
         'grupos': grupos,
         'km': orc.km or 0,
         'pedagios': orc.pedagios or 0,
@@ -123,10 +125,17 @@ def texto_whatsapp(r):
          'Cliente: ' + r['cliente']]
     partes = [p for p in (r['evento_tipo'], r['evento_data'], r['horario']) if p]
     if partes:
-        L.append('Evento: ' + ' - '.join(partes))
-    local = ', '.join(p for p in (r['local_nome'], r['cidade']) if p)
-    if local:
-        L.append('Local: ' + local)
+        rotulo_data = 'Data: ' if r['tipo'] == 'Frete' else 'Evento: '
+        L.append(rotulo_data + ' - '.join(partes))
+    if r['tipo'] == 'Frete':
+        if r['local_retirada']:
+            L.append('Retirada: ' + r['local_retirada'])
+        if r['local_entrega']:
+            L.append('Entrega: ' + r['local_entrega'])
+    else:
+        local = ', '.join(p for p in (r['local_nome'], r['cidade']) if p)
+        if local:
+            L.append('Local: ' + local)
     L.append('')
     varios = len(r['grupos']) > 1
     for g in r['grupos']:
@@ -227,6 +236,11 @@ def gerar_ics(o):
     local = ', '.join(p for p in (o.local_nome, o.local_endereco, o.cidade) if p)
     descricao = ('Orçamento ' + (o.numero or str(o.id)) + ' (' + (o.status or '') +
                  ') - Total ' + moeda(o.total) + (' - Horário combinado: ' + texto_horario(o) if o.hora_inicio else ''))
+    if o.tipo == 'Frete':
+        titulo = 'Frete - ' + o.cliente.nome
+        local = o.local_retirada or ''
+        descricao += (' - Retirada: ' + (o.local_retirada or '-') +
+                      ' - Entrega: ' + (o.local_entrega or '-'))
     linhas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Walls//Orcamentos//PT',
               'BEGIN:VEVENT', f'UID:orc-{o.id}@walls',
               f'DTSTAMP:{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}']
